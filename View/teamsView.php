@@ -1,5 +1,9 @@
 <?php
 require_once("commonViews.php");
+require_once("View/Components/TableView.php");
+require_once("View/Components/CardView.php");
+require_once("View/Components/OrganigramView.php");
+require_once("Model/teamModel.php");
 
 class teamsView {
     
@@ -7,24 +11,115 @@ class teamsView {
         ?>
         <head>
             <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>Équipes - LRE</title>
             <link rel="stylesheet" href="View/css/commonStyles.css">
             <link rel="stylesheet" href="View/css/teamsStyle.css">
-            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+            <link rel="stylesheet" href="View/css/components.css">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
             <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+            <script>
+            // Global Sorting Function
+            function sortTable(tableId, n, type) {
+                var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+                table = document.getElementById(tableId);
+                if(!table) return;
+                switching = true;
+                dir = "asc"; 
+                
+                // Icon management
+                $(table).find('th i').removeClass('fa-sort-up fa-sort-down').addClass('fa-sort');
+                var th = table.getElementsByTagName("TH")[n];
+                
+                while (switching) {
+                    switching = false;
+                    rows = table.rows;
+                    
+                    for (i = 1; i < (rows.length - 1); i++) {
+                        shouldSwitch = false;
+                        x = rows[i].getElementsByTagName("TD")[n];
+                        y = rows[i + 1].getElementsByTagName("TD")[n];
+                        
+                        var xVal = $(x).text().trim();
+                        var yVal = $(y).text().trim();
+                        
+                        // Extract custom values if present
+                        if($(x).find('[data-value]').length > 0) xVal = $(x).find('[data-value]').data('value');
+                        if($(y).find('[data-value]').length > 0) yVal = $(y).find('[data-value]').data('value');
+
+                        if (type == 'grade') {
+                            xVal = getGradeRank(xVal);
+                            yVal = getGradeRank(yVal);
+                        } else if (type == 'role') {
+                            xVal = getRoleRank(xVal);
+                            yVal = getRoleRank(yVal);
+                        } else if (type == 'number') {
+                            xVal = parseFloat(xVal) || 0;
+                            yVal = parseFloat(yVal) || 0;
+                        } else if (type == 'none') {
+                            continue;
+                        } else {
+                            xVal = xVal.toLowerCase();
+                            yVal = yVal.toLowerCase();
+                        }
+
+                        if (dir == "asc") {
+                            if (xVal > yVal) { shouldSwitch = true; break; }
+                        } else if (dir == "desc") {
+                            if (xVal < yVal) { shouldSwitch = true; break; }
+                        }
+                    }
+                    
+                    if (shouldSwitch) {
+                        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                        switching = true;
+                        switchcount ++; 
+                    } else {
+                        if (switchcount == 0 && dir == "asc") {
+                            dir = "desc";
+                            switching = true;
+                        }
+                    }
+                }
+                
+                // Update Icon
+                var icon = $(th).find('i');
+                icon.removeClass('fa-sort');
+                if(dir == "asc") icon.addClass('fa-sort-up');
+                else icon.addClass('fa-sort-down');
+            }
+
+            function getGradeRank(grade) {
+                if(!grade) return 99;
+                grade = grade.toLowerCase();
+                if (grade.includes('prof')) return 1;
+                if (grade.includes('mca')) return 2;
+                if (grade.includes('mcb')) return 3;
+                if (grade.includes('maa')) return 4;
+                if (grade.includes('mab')) return 5;
+                if (grade.includes('doctorant')) return 6;
+                return 99;
+            }
+
+            function getRoleRank(role) {
+                if(!role) return 99;
+                role = role.toLowerCase();
+                if (role.includes('chef')) return 1;
+                if (role.includes('admin')) return 2;
+                if (role.includes('enseignant')) return 3;
+                if (role.includes('chercheur')) return 4;
+                if (role.includes('membre')) return 5;
+                if (role.includes('doctorant')) return 6;
+                if (role.includes('etudiant')) return 7;
+                return 99;
+            }
+            </script>
         </head>
         <?php
     }
     
+    // MASTER VIEW: List of Teams
     public function afficherEquipes($teams, $director) {
         $common = new commonViews();
-        
-        // Get all members for filtering
-        require_once("Model/teamModel.php");
-        $teamModel = new teamModel();
-        
         ?>
         <!DOCTYPE html>
         <html lang="fr">
@@ -33,233 +128,58 @@ class teamsView {
                 <?php $common->navBar(); ?>
                 
                 <div class="teams-container">
-                    <!-- 1. PRESENTATION DU LABORATOIRE -->
-                    <section class="lab-presentation">
-                        <h1 class="page-title">Laboratoire de Recherche ESI (LRE)</h1>
-                        
-                        <div class="presentation-content">
-                            <h2>À Propos du Laboratoire</h2>
-                            <p>
-                                Le Laboratoire de Recherche ESI (LRE) est un pôle d'excellence dédié à la recherche 
-                                en informatique avancée. Créé pour promouvoir l'innovation et la recherche scientifique 
-                                de haut niveau, le LRE regroupe plus de 15 chercheurs permanents et accueille une 
-                                trentaine de doctorants chaque année.
-                            </p>
-                            
-                            <h3>Thèmes de Recherche</h3>
-                            <div class="research-themes">
-                                <div class="theme-card">
-                                    <i class="fa-solid fa-brain"></i>
-                                    <h4>Intelligence Artificielle</h4>
-                                    <p>Machine Learning, Deep Learning, Computer Vision, NLP</p>
-                                </div>
-                                <div class="theme-card">
-                                    <i class="fa-solid fa-shield-halved"></i>
-                                    <h4>Sécurité Informatique</h4>
-                                    <p>Cybersécurité, Cryptographie, Sécurité IoT, Blockchain</p>
-                                </div>
-                                <div class="theme-card">
-                                    <i class="fa-solid fa-cloud"></i>
-                                    <h4>Cloud Computing</h4>
-                                    <p>Architectures cloud, Virtualisation, Conteneurisation</p>
-                                </div>
-                                <div class="theme-card">
-                                    <i class="fa-solid fa-code"></i>
-                                    <h4>Ingénierie Web</h4>
-                                    <p>Services Web, Big Data, Systèmes d'Information</p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
+                    <h1 class="page-title">Nos Équipes de Recherche</h1>
                     
-                    <!-- 2. ORGANIGRAMME -->
+                    <!-- Director / Lab Organigram Link could go here if global -->
                     <?php if ($director): ?>
-                        <section class="organigramme-section">
-                            <h2><i class="fa-solid fa-sitemap"></i> Organigramme du Laboratoire</h2>
-                            
-                            <div class="director-card">
-                                <div class="director-photo">
-                                    <?php if (!empty($director['photo']) && file_exists($director['photo'])): ?>
-                                        <img src="<?= $director['photo'] ?>" alt="<?= htmlspecialchars($director['prenom'] . ' ' . $director['nom']) ?>">
-                                    <?php else: ?>
-                                        <img src="View/assets/default_avatar.png" alt="<?= htmlspecialchars($director['prenom'] . ' ' . $director['nom']) ?>">
-                                    <?php endif; ?>
-                                </div>
-                                <div class="director-info">
-                                    <h3><?= htmlspecialchars($director['prenom'] . ' ' . $director['nom']) ?></h3>
-                                    <p class="position"><i class="fa-solid fa-user-tie"></i> Directeur du Laboratoire</p>
-                                    <p class="grade"><i class="fa-solid fa-graduation-cap"></i> <?= htmlspecialchars($director['grade']) ?></p>
-                                    <p class="email"><i class="fa-solid fa-envelope"></i> <?= htmlspecialchars($director['email']) ?></p>
-                                    <?php if ($director['domaine_recherche']): ?>
-                                        <p class="domain"><i class="fa-solid fa-flask"></i> <?= htmlspecialchars($director['domaine_recherche']) ?></p>
-                                    <?php endif; ?>
-                                    <div class="director-links">
-                                        <a href="index.php?router=membre-profil&id=<?= $director['id_user'] ?>" class="btn-sm btn-primary">
-                                            <i class="fa-solid fa-user"></i> Biographie
-                                        </a>
-                                        <a href="index.php?router=membre-publications&id=<?= $director['id_user'] ?>" class="btn-sm btn-secondary">
-                                            <i class="fa-solid fa-book"></i> Publications
-                                        </a>
-                                    </div>
-                                </div>
+                        <div class="lab-director-summary" style="text-align: center; margin-bottom: 3rem;">
+                            <h2>Directeur du Laboratoire</h2>
+                            <div class="director-card-mini" style="display: inline-block; background: white; padding: 1rem; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                <img src="<?= $director['photo'] ?? 'View/assets/default_avatar.png' ?>" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">
+                                <h3><?= htmlspecialchars($director['prenom'] . ' ' . $director['nom']) ?></h3>
+                                <p><?= htmlspecialchars($director['grade']) ?></p>
                             </div>
-                        </section>
+                        </div>
                     <?php endif; ?>
+
+                    <!-- Filters Section -->
+                    <div class="filters-section" style="margin-bottom: 2rem;">
+                        <input type="text" id="statsSearch" placeholder="Rechercher une équipe..." class="form-input" style="max-width: 300px;">
+                    </div>
                     
-                    <!-- 3. EQUIPES DE RECHERCHE -->
-                    <section class="teams-section">
-                        <h2><i class="fa-solid fa-users"></i> Équipes de Recherche</h2>
-                        
-                        <?php if (empty($teams)): ?>
-                            <p class="no-results">Aucune équipe disponible.</p>
-                        <?php else: ?>
-                            <?php foreach ($teams as $team): ?>
-                                <?php 
-                                $members = $teamModel->getTeamMembers($team['id_team']);
-                                $teamPublications = $teamModel->getTeamPublications($team['id_team']);
-                                ?>
-                                
-                                <div class="team-block">
-                                    <div class="team-header">
-                                        <div>
-                                            <h3><?= htmlspecialchars($team['nom']) ?></h3>
-                                            <?php if ($team['description']): ?>
-                                                <p class="team-description"><?= htmlspecialchars($team['description']) ?></p>
-                                            <?php endif; ?>
-                                        </div>
-                                        <a href="index.php?router=equipe-publications&id=<?= $team['id_team'] ?>" class="btn-primary">
-                                            <i class="fa-solid fa-book-open"></i> Publications de l'équipe (<?= count($teamPublications) ?>)
-                                        </a>
-                                    </div>
-                                    
-                                    <!-- Members Table -->
-                                    <table class="members-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Photo</th>
-                                                <th>Nom Complet</th>
-                                                <th>Grade</th>
-                                                <th>Poste/Rôle</th>
-                                                <th>Spécialité</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php if (empty($members)): ?>
-                                                <tr><td colspan="6" class="no-members">Aucun membre dans cette équipe</td></tr>
-                                            <?php else: ?>
-                                                <?php foreach ($members as $member): ?>
-                                                    <tr>
-                                                        <td>
-                                                            <div class="member-photo-sm">
-                                                                <?php if (!empty($member['photo']) && file_exists($member['photo'])): ?>
-                                                                    <img src="<?= $member['photo'] ?>" alt="<?= htmlspecialchars($member['prenom'] . ' ' . $member['nom']) ?>">
-                                                                <?php else: ?>
-                                                                    <img src="View/assets/default_avatar.png" alt="<?= htmlspecialchars($member['prenom'] . ' ' . $member['nom']) ?>">
-                                                                <?php endif; ?>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <strong><?= htmlspecialchars($member['prenom'] . ' ' . $member['nom']) ?></strong>
-                                                        </td>
-                                                        <td>
-                                                            <span class="grade-badge"><?= htmlspecialchars($member['grade']) ?></span>
-                                                        </td>
-                                                        <td>
-                                                            <?php if ($member['role_dans_equipe']): ?>
-                                                                <span class="role-badge"><?= htmlspecialchars($member['role_dans_equipe']) ?></span>
-                                                            <?php else: ?>
-                                                                <span class="role-badge">Membre</span>
-                                                            <?php endif; ?>
-                                                        </td>
-                                                        <td><?= htmlspecialchars($member['specialite'] ?? '-') ?></td>
-                                                        <td class="actions-cell">
-                                                            <a href="index.php?router=membre-profil&id=<?= $member['id_user'] ?>" class="btn-sm btn-primary" title="Biographie">
-                                                                <i class="fa-solid fa-user"></i>
-                                                            </a>
-                                                            <a href="index.php?router=membre-publications&id=<?= $member['id_user'] ?>" class="btn-sm btn-secondary" title="Publications">
-                                                                <i class="fa-solid fa-book"></i>
-                                                            </a>
-                                                        </td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            <?php endif; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </section>
+                    <!-- TEAMS TABLE -->
+                    <?php
+                    $columns = [
+                        'nom' => ['label' => 'Nom de l\'équipe', 'renderer' => function($row) {
+                            return '<strong>' . htmlspecialchars($row['nom']) . '</strong>';
+                        }],
+                        'chef' => ['label' => 'Chef d\'équipe', 'renderer' => function($row) {
+                            return htmlspecialchars($row['chef_prenom'] . ' ' . $row['chef_nom']);
+                        }],
+                        'member_count' => ['label' => 'Membres', 'renderer' => function($row) {
+                            return '<span class="badge">' . ($row['member_count'] ?? 0) . '</span>';
+                        }],
+                        'pub_count' => ['label' => 'Publications', 'renderer' => function($row) {
+                            return '<span class="badge">' . ($row['pub_count'] ?? 0) . '</span>';
+                        }],
+                        'actions' => ['label' => 'Actions', 'renderer' => function($row) {
+                            return '<a href="index.php?router=equipe-details&id='.$row['id_team'].'" class="btn-sm btn-primary">
+                                        <i class="fa-solid fa-eye"></i> Voir Détails & Organigramme
+                                    </a>';
+                        }]
+                    ];
                     
-                    <!-- 4. TOUS LES MEMBRES (avec filtrage) -->
-                    <section class="all-members-section">
-                        <h2><i class="fa-solid fa-user-group"></i> Tous les Membres du Laboratoire</h2>
-                        
-                        <!-- Filters -->
-                        <div class="filters-bar">
-                            <select id="filterGrade" class="filter-select">
-                                <option value="">Tous les grades</option>
-                                <option value="Professeur">Professeur</option>
-                                <option value="MCA">MCA</option>
-                                <option value="MCB">MCB</option>
-                                <option value="MAA">MAA</option>
-                                <option value="MAB">MAB</option>
-                                <option value="Doctorant">Doctorant</option>
-                            </select>
-                            
-                            <select id="filterRole" class="filter-select">
-                                <option value="">Tous les rôles</option>
-                                <option value="admin">Admin</option>
-                                <option value="enseignant-chercheur">Enseignant-Chercheur</option>
-                                <option value="doctorant">Doctorant</option>
-                            </select>
-                            
-                            <input type="text" id="searchMember" class="search-input" placeholder="Rechercher par nom ou spécialité...">
-                            
-                            <button onclick="applyMemberFilters()" class="btn-primary">
-                                <i class="fa-solid fa-filter"></i> Filtrer
-                            </button>
-                            <button onclick="resetMemberFilters()" class="btn-secondary">
-                                <i class="fa-solid fa-rotate-left"></i> Réinitialiser
-                            </button>
-                        </div>
-                        
-                        <!-- Members Grid -->
-                        <div class="members-grid" id="membersGrid">
-                            <!-- Will be populated by JavaScript or PHP -->
-                        </div>
-                    </section>
+                    TableView::render($columns, $teams, 'teamsTable');
+                    ?>
                 </div>
                 
                 <script>
-                    function applyMemberFilters() {
-                        const grade = $('#filterGrade').val();
-                        const role = $('#filterRole').val();
-                        const search = $('#searchMember').val();
-                        
-                        let url = 'index.php?router=equipes';
-                        const params = [];
-                        
-                        if (grade) params.push('grade=' + encodeURIComponent(grade));
-                        if (role) params.push('role=' + encodeURIComponent(role));
-                        if (search) params.push('search=' + encodeURIComponent(search));
-                        
-                        if (params.length > 0) {
-                            url += '&' + params.join('&');
-                        }
-                        
-                        window.location.href = url;
-                    }
-                    
-                    function resetMemberFilters() {
-                        window.location.href = 'index.php?router=equipes';
-                    }
-                    
-                    // Allow Enter key in search
-                    $('#searchMember').on('keypress', function(e) {
-                        if (e.which === 13) {
-                            applyMemberFilters();
-                        }
+                    // Simple JS for search (since we want it "done properly" we'd normally do AJAX, but client-side fine for small data)
+                    $('#statsSearch').on('keyup', function() {
+                        var value = $(this).val().toLowerCase();
+                        $("#teamsTable tbody tr").filter(function() {
+                            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                        });
                     });
                 </script>
                 
@@ -269,9 +189,32 @@ class teamsView {
         <?php
     }
     
-    // Individual member profile page
-    public function afficherMembreProfil($member, $publications, $projects) {
+    // DETAIL VIEW: Organigram + Members Table
+    public function afficherDetailsEquipe($team, $members, $publications) {
         $common = new commonViews();
+        
+        // Prepare Organigram Data
+        // Root: Chef
+        $root = [
+            'prenom' => $team['chef_prenom'],
+            'nom' => $team['chef_nom'],
+            'photo' => $team['chef_photo'],
+            'role' => 'Chef d\'équipe (' . $team['chef_grade'] . ')',
+            'id_user' => $team['chef_id']
+        ];
+        
+        // Group Members by Role/Grade for the tree
+        $groups = ['Enseignants-Chercheurs' => [], 'Doctorants' => []];
+        foreach ($members as $m) {
+            if ($m['id_user'] == $team['chef_id']) continue; // Skip chef if in list
+            
+            if (stripos($m['grade'], 'Doctorant') !== false || stripos($m['role_dans_equipe'], 'Doctorant') !== false) {
+                $groups['Doctorants'][] = $m;
+            } else {
+                $groups['Enseignants-Chercheurs'][] = $m;
+            }
+        }
+        
         ?>
         <!DOCTYPE html>
         <html lang="fr">
@@ -279,87 +222,266 @@ class teamsView {
             <body>
                 <?php $common->navBar(); ?>
                 
-                <div class="member-profile-container">
-                    <a href="index.php?router=equipes" class="back-link">
-                        <i class="fa-solid fa-arrow-left"></i> Retour aux équipes
-                    </a>
+                <div class="teams-container">
+                    <a href="index.php?router=equipes" class="back-link"><i class="fa-solid fa-arrow-left"></i> Retour aux équipes</a>
                     
-                    <div class="profile-header">
-                        <div class="profile-photo-large">
-                            <?php if (!empty($member['photo']) && file_exists($member['photo'])): ?>
-                                <img src="<?= $member['photo'] ?>" alt="<?= htmlspecialchars($member['prenom'] . ' ' . $member['nom']) ?>">
-                            <?php else: ?>
-                                <img src="View/assets/default_avatar.png" alt="<?= htmlspecialchars($member['prenom'] . ' ' . $member['nom']) ?>">
-                            <?php endif; ?>
+                    <h1 class="page-title"><?= htmlspecialchars($team['nom']) ?></h1>
+                    <?php if ($team['description']): ?>
+                        <p class="team-desc-large" style="text-align: center; max-width: 800px; margin: 0 auto 3rem; color: #666;">
+                            <?= htmlspecialchars($team['description']) ?>
+                        </p>
+                    <?php endif; ?>
+                    
+                    <!-- VISUAL ORGANIGRAM -->
+                    <section class="organigram-section">
+                        <h2 class="section-heading"><i class="fa-solid fa-sitemap"></i> Organigramme de l'équipe</h2>
+                        <?php
+                        OrganigramView::renderTree($root, $groups, function($node) {
+                            $photo = !empty($node['photo']) ? $node['photo'] : 'View/assets/default_avatar.png';
+                            $role = $node['role'] ?? ($node['grade'] ?? 'Membre');
+                            $id = $node['id_user'];
+                            
+                            return '
+                                <a href="index.php?router=membre-profil&id='.$id.'" style="text-decoration:none; color:inherit;">
+                                    <img src="'.$photo.'" class="org-photo">
+                                    <div class="org-name">'.htmlspecialchars($node['prenom'].' '.$node['nom']).'</div>
+                                    <div class="org-role">'.htmlspecialchars($role).'</div>
+                                </a>
+                            ';
+                        });
+                        ?>
+                    </section>
+                    
+                    <hr style="margin: 4rem 0; border: 0; border-top: 1px solid #eee;">
+                    
+                    <!-- MEMBERS TABLE -->
+                    <section class="members-list-section">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h2 class="section-heading" style="margin:0;"><i class="fa-solid fa-users"></i> Liste des Membres</h2>
+                            <input type="text" id="memberSearch" placeholder="Filtrer les membres..." class="form-input" style="width: auto;">
                         </div>
                         
-                        <div class="profile-info">
-                            <h1><?= htmlspecialchars($member['prenom'] . ' ' . $member['nom']) ?></h1>
-                            <p class="profile-grade"><i class="fa-solid fa-graduation-cap"></i> <?= htmlspecialchars($member['grade']) ?></p>
-                            <?php if ($member['poste']): ?>
-                                <p class="profile-position"><i class="fa-solid fa-briefcase"></i> <?= htmlspecialchars($member['poste']) ?></p>
-                            <?php endif; ?>
-                            <p class="profile-email"><i class="fa-solid fa-envelope"></i> <?= htmlspecialchars($member['email']) ?></p>
-                            <?php if ($member['specialite']): ?>
-                                <p class="profile-specialty"><i class="fa-solid fa-tag"></i> <?= htmlspecialchars($member['specialite']) ?></p>
-                            <?php endif; ?>
-                            <?php if ($member['domaine_recherche']): ?>
-                                <p class="profile-domain"><i class="fa-solid fa-flask"></i> <?= htmlspecialchars($member['domaine_recherche']) ?></p>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    
-                    <?php if ($member['biographie']): ?>
-                        <div class="biography-section">
-                            <h2><i class="fa-solid fa-user-circle"></i> Biographie</h2>
-                            <p><?= nl2br(htmlspecialchars($member['biographie'])) ?></p>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <div class="member-publications">
-                        <h2><i class="fa-solid fa-book-open"></i> Publications (<?= count($publications) ?>)</h2>
-                        <?php if (empty($publications)): ?>
-                            <p class="no-results">Aucune publication</p>
-                        <?php else: ?>
-                            <div class="publications-list">
-                                <?php foreach ($publications as $pub): ?>
-                                    <div class="pub-item">
-                                        <h3><?= htmlspecialchars($pub['titre']) ?></h3>
-                                        <p class="pub-meta">
-                                            <span class="pub-type"><?= ucfirst($pub['type']) ?></span>
-                                            <span><?= date('Y', strtotime($pub['date_publication'])) ?></span>
-                                            <?php if ($pub['conference']): ?>
-                                                <span><?= htmlspecialchars($pub['conference']) ?></span>
-                                            <?php endif; ?>
-                                        </p>
-                                        <?php if ($pub['fichier_pdf']): ?>
-                                            <a href="<?= $pub['fichier_pdf'] ?>" class="btn-sm btn-primary" target="_blank">
-                                                <i class="fa-solid fa-file-pdf"></i> PDF
-                                            </a>
-                                        <?php endif; ?>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <?php if (!empty($projects)): ?>
-                        <div class="member-projects">
-                            <h2><i class="fa-solid fa-diagram-project"></i> Projets (<?= count($projects) ?>)</h2>
-                            <div class="projects-list">
-                                <?php foreach ($projects as $project): ?>
-                                    <div class="project-item">
-                                        <h3><?= htmlspecialchars($project['titre']) ?></h3>
-                                        <p class="project-role"><?= htmlspecialchars($project['role_projet']) ?></p>
-                                        <a href="index.php?router=projet-details&id=<?= $project['id_project'] ?>" class="btn-sm btn-primary">
-                                            Voir le projet
-                                        </a>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                    <?php endif; ?>
+                        <?php
+                        $memColumns = [
+                            'photo' => ['label' => 'Photo', 'renderer' => function($row) {
+                                $src = !empty($row['photo']) ? $row['photo'] : 'View/assets/default_avatar.png';
+                                return '<img src="'.$src.'" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">';
+                            }, 'sortType' => 'none'],
+                            'nom' => ['label' => 'Nom Complet', 'renderer' => function($row) {
+                                return '<strong>'.htmlspecialchars($row['prenom'].' '.$row['nom']).'</strong>';
+                            }, 'sortType' => 'string'],
+                            'grade' => ['label' => 'Grade', 'renderer' => function($row) {
+                                return '<span class="grade-badge" data-value="'.htmlspecialchars($row['grade']).'">'.htmlspecialchars($row['grade']).'</span>';
+                            }, 'sortType' => 'grade'],
+                            'role' => ['label' => 'Rôle', 'renderer' => function($row) {
+                                return '<span data-value="'.htmlspecialchars($row['role_dans_equipe'] ?? 'Membre').'">'.htmlspecialchars($row['role_dans_equipe'] ?? 'Membre').'</span>';
+                            }, 'sortType' => 'role'],
+                            'specialite' => ['label' => 'Spécialité', 'renderer' => function($row) {
+                                return htmlspecialchars($row['specialite'] ?? '-');
+                            }, 'sortType' => 'string'],
+                            'actions' => ['label' => 'Profil', 'renderer' => function($row) {
+                                return '<a href="index.php?router=membre-profil&id='.$row['id_user'].'" class="btn-sm btn-secondary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                            <i class="fa-solid fa-user"></i>
+                                        </a>';
+                            }, 'sortType' => 'none']
+                        ];
+                        
+                        TableView::render($memColumns, $members, 'membersTable');
+                        ?>
+                    </section>
                 </div>
+                
+                <script>
+                    $('#memberSearch').on('keyup', function() {
+                        var value = $(this).val().toLowerCase();
+                        $("#membersTable tbody tr").filter(function() {
+                            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                        });
+                    });
+
+                    // Search for teams
+                    $('#statsSearch').on('keyup', function() {
+                        var value = $(this).val().toLowerCase();
+                        $("#teamsTable tbody tr").filter(function() {
+                            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                        });
+                    });
+
+                    // Custom Sorting Function
+                    function sortTable(tableId, n, type) {
+                        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+                        table = document.getElementById(tableId);
+                        switching = true;
+                        dir = "asc"; 
+                        
+                        // Icon management
+                        $(table).find('th i').removeClass('fa-sort-up fa-sort-down').addClass('fa-sort');
+                        var th = table.getElementsByTagName("TH")[n];
+                        
+                        while (switching) {
+                            switching = false;
+                            rows = table.rows;
+                            
+                            for (i = 1; i < (rows.length - 1); i++) {
+                                shouldSwitch = false;
+                                x = rows[i].getElementsByTagName("TD")[n];
+                                y = rows[i + 1].getElementsByTagName("TD")[n];
+                                
+                                var xVal = $(x).text().trim();
+                                var yVal = $(y).text().trim();
+                                
+                                // Extract custom values if present (data-value)
+                                if($(x).find('[data-value]').length > 0) xVal = $(x).find('[data-value]').data('value');
+                                if($(y).find('[data-value]').length > 0) yVal = $(y).find('[data-value]').data('value');
+
+                                if (type == 'grade') {
+                                    xVal = getGradeRank(xVal);
+                                    yVal = getGradeRank(yVal);
+                                } else if (type == 'role') {
+                                    xVal = getRoleRank(xVal);
+                                    yVal = getRoleRank(yVal);
+                                } else if (type == 'number') {
+                                    xVal = parseFloat(xVal) || 0;
+                                    yVal = parseFloat(yVal) || 0;
+                                } else if (type == 'none') {
+                                    continue;
+                                } else {
+                                    xVal = xVal.toLowerCase();
+                                    yVal = yVal.toLowerCase();
+                                }
+
+                                if (dir == "asc") {
+                                    if (xVal > yVal) { shouldSwitch = true; break; }
+                                } else if (dir == "desc") {
+                                    if (xVal < yVal) { shouldSwitch = true; break; }
+                                }
+                            }
+                            
+                            if (shouldSwitch) {
+                                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                                switching = true;
+                                switchcount ++; 
+                            } else {
+                                if (switchcount == 0 && dir == "asc") {
+                                    dir = "desc";
+                                    switching = true;
+                                }
+                            }
+                        }
+                        
+                        // Update Icon
+                        var icon = $(th).find('i');
+                        icon.removeClass('fa-sort');
+                        if(dir == "asc") icon.addClass('fa-sort-up');
+                        else icon.addClass('fa-sort-down');
+                    }
+
+                    // Helper: Get Rank for Grades (Lower number = Higher Importance)
+                    function getGradeRank(grade) {
+                        grade = grade.toLowerCase();
+                        if (grade.includes('prof')) return 1;
+                        if (grade.includes('mca')) return 2;
+                        if (grade.includes('mcb')) return 3;
+                        if (grade.includes('maa')) return 4;
+                        if (grade.includes('mab')) return 5;
+                        if (grade.includes('doctorant')) return 6;
+                        return 99; // Unknown
+                    }
+
+                    // Helper: Get Rank for Roles
+                    function getRoleRank(role) {
+                        role = role.toLowerCase();
+                        if (role.includes('chef')) return 1;
+                        if (role.includes('admin')) return 2;
+                        if (role.includes('enseignant')) return 3;
+                        if (role.includes('chercheur')) return 4;
+                        if (role.includes('membre')) return 5;
+                        if (role.includes('doctorant')) return 6;
+                        if (role.includes('etudiant')) return 7;
+                        return 99;
+                    }
+                </script>
+                
+                <?php $common->footer(); ?>
+            </body>
+        </html>
+        <?php
+    }
+    
+    public function afficherMembreProfil($member, $publications, $projects) {
+        $common = new commonViews();
+        
+        // Privacy Check Simulation 
+        // In a real implementation: if (!$member['is_public'] && !isActiveUser($member['id'])) ...
+        $isPublic = true; // Defaulting to true as requested
+        
+        ?>
+        <!DOCTYPE html>
+        <html lang="fr">
+            <?php $this->entetePage(); ?>
+            <body>
+                <?php $common->navBar(); ?>
+                
+                <?php if ($isPublic): ?>
+                    <div class="member-profile-container" style="max-width: 1000px; margin: 40px auto; padding: 20px;">
+                        <a href="javascript:history.back()" class="back-link btn-sm btn-secondary" style="margin-bottom: 20px; display:inline-block;">
+                            <i class="fa-solid fa-arrow-left"></i> Retour
+                        </a>
+                        
+                        <div class="profile-card" style="display:flex; gap:30px; background:white; padding:30px; border-radius:15px; box-shadow:0 10px 25px rgba(0,0,0,0.05);">
+                            <div class="profile-left" style="flex:0 0 250px; text-align:center;">
+                                <div class="profile-photo-wrapper" style="width:200px; height:200px; margin:0 auto 20px; position:relative;">
+                                    <img src="<?= !empty($member['photo']) ? $member['photo'] : 'View/assets/default_avatar.png' ?>" 
+                                         style="width:100%; height:100%; object-fit:cover; border-radius:50%; border:5px solid #fff; box-shadow:0 5px 15px rgba(0,0,0,0.1);">
+                                </div>
+                                <h2 style="margin:0; color:#2d3748;"><?= htmlspecialchars($member['prenom'] . ' ' . $member['nom']) ?></h2>
+                                <p style="color:#718096; font-weight:500; margin-top:5px;"><?= htmlspecialchars($member['grade']) ?></p>
+                                
+                                <div class="contact-mini" style="margin-top:20px; text-align:left; background:#f7fafc; padding:15px; border-radius:8px;">
+                                    <p style="margin:5px 0;"><i class="fa-solid fa-envelope" style="color:#667eea; width:20px;"></i> <?= htmlspecialchars($member['email']) ?></p>
+                                    <?php if(!empty($member['telephone'])): ?>
+                                        <p style="margin:5px 0;"><i class="fa-solid fa-phone" style="color:#667eea; width:20px;"></i> <?= htmlspecialchars($member['telephone']) ?></p>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            
+                            <div class="profile-right" style="flex:1;">
+                                <?php if (!empty($member['biographie'])): ?>
+                                    <div class="bio-section" style="margin-bottom:30px;">
+                                        <h3 style="border-bottom:2px solid #e2e8f0; padding-bottom:10px; margin-bottom:15px; color:#4a5568;">Biographie</h3>
+                                        <p style="line-height:1.6; color:#4a5568;"><?= nl2br(htmlspecialchars($member['biographie'])) ?></p>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <div class="publications-section">
+                                    <h3 style="border-bottom:2px solid #e2e8f0; padding-bottom:10px; margin-bottom:15px; color:#4a5568;">
+                                        Publications Récentes
+                                    </h3>
+                                    <?php
+                                    if (!empty($publications)) {
+                                         $pubCols = [
+                                            'titre' => ['label' => 'Titre', 'renderer' => function($r) {
+                                                return '<strong>'.htmlspecialchars($r['titre']).'</strong><br><small style="color:#718096;">'.htmlspecialchars($r['type']).'</small>';
+                                            }],
+                                            'date' => ['label' => 'Année', 'renderer' => function($r) { return date('Y', strtotime($r['date_publication'])); }]
+                                         ];
+                                         TableView::render($pubCols, $publications, 'pubTable', 'generic-table simple-table');
+                                    } else {
+                                        echo '<p style="color:#a0aec0; font-style:italic;">Aucune publication publique disponible.</p>';
+                                    }
+                                    ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div class="container" style="text-align:center; padding:100px 20px;">
+                        <i class="fa-solid fa-lock" style="font-size:50px; color:#cbd5e0; margin-bottom:20px;"></i>
+                        <h2>Profil Privé</h2>
+                        <p>Ce profil n'est pas accessible publiquement.</p>
+                        <a href="index.php?router=equipes" class="btn btn-primary">Retour aux équipes</a>
+                    </div>
+                <?php endif; ?>
                 
                 <?php $common->footer(); ?>
             </body>

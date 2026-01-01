@@ -9,9 +9,19 @@ class teamModel {
     }
     
     // Get all teams
+    // Get all teams with stats
+    // Get all teams with stats (members count and publications count)
     public function getAllTeams() {
         $conn = $this->db->connexion();
-        $query = "SELECT t.*, u.nom as chef_nom, u.prenom as chef_prenom
+        // Subqueries are safer for aggregation to avoid cartesian product issues if joining multiple one-to-many tables
+        $query = "SELECT t.*, 
+                         u.nom as chef_nom, 
+                         u.prenom as chef_prenom,
+                         (SELECT COUNT(*) FROM team_members tm WHERE tm.team_id = t.id_team) as member_count,
+                         (SELECT COUNT(DISTINCT pa.pub_id) 
+                          FROM team_members tm 
+                          JOIN publication_authors pa ON tm.user_id = pa.user_id 
+                          WHERE tm.team_id = t.id_team) as pub_count
                   FROM teams t
                   LEFT JOIN users u ON t.chef_id = u.id_user
                   ORDER BY t.nom";
@@ -73,6 +83,21 @@ class teamModel {
         $director = $result->fetch_assoc();
         $this->db->deconnexion($conn);
         return $director;
+    }
+    // Get specific team details
+    public function getTeam($id) {
+        $conn = $this->db->connexion();
+        $query = "SELECT t.*, u.nom as chef_nom, u.prenom as chef_prenom, u.photo as chef_photo, u.grade as chef_grade, u.email as chef_email
+                  FROM teams t
+                  LEFT JOIN users u ON t.chef_id = u.id_user
+                  WHERE t.id_team = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $team = $result->fetch_assoc();
+        $this->db->deconnexion($conn);
+        return $team;
     }
 }
 ?>

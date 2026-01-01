@@ -163,7 +163,7 @@ function loadPartners() {
 // Load events in events section
 function loadEvents() {
     $.ajax({
-        url: 'index.php?router=get-news',
+        url: 'index.php?router=get-events', // Corrected endpoint
         method: 'GET',
         dataType: 'json',
         success: function (data) {

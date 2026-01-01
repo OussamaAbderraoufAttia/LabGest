@@ -50,6 +50,18 @@ if (isset($_GET['router'])) {
             $controller->afficherListe();
             break;
             
+        case 'equipe-details':
+            require_once("Controller/teamController.php");
+            $controller = new teamController();
+            $controller->afficherDetailsEquipe();
+            break;
+
+        case 'membre-profil':
+            require_once("Controller/teamController.php");
+            $controller = new teamController();
+            $controller->afficherMembreProfil();
+            break;
+            
         case 'equipes':
             $controller = new teamController();
             $controller->afficherEquipes();
@@ -234,6 +246,11 @@ if (isset($_GET['router'])) {
         case 'get-news':
             $controller = new homeController();
             $controller->getNewsData();
+            break;
+
+        case 'get-events':
+            $controller = new homeController();
+            $controller->getEventsData();
             break;
             
         case 'filter-projects':

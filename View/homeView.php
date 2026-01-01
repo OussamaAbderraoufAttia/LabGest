@@ -25,7 +25,7 @@ class homeView {
         ?>
         <div class="hero-slider">
             <div class="slider-header">
-                <img src="View/assets/logo.png" alt="LRE Logo" class="hero-logo">
+                <img src="View/assets/logo-removebg-preview.png" alt="LRE Logo" class="hero-logo">
                 <div class="social-media">
                     <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
                     <a href="#"><i class="fa-brands fa-instagram"></i></a>
@@ -34,7 +34,7 @@ class homeView {
                 </div>
             </div>
             <div class="slider-content" id="sliderContent">
-                <h1 id="slideTitle">Bienvenue au Laboratoire de Recherche ESI</h1>
+                <h1 id="slideTitle">Bienvenue au <img src="View/assets/logo-removebg-preview.png" alt="LRE" style="height: 1.2em; vertical-align: bottom; margin-left: 10px;"></h1>
                 <p id="slideDescription">Découvrez nos dernières recherches et innovations</p>
             </div>
             <div class="slider-indicators" id="sliderIndicators">

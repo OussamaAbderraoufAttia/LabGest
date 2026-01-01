@@ -21,7 +21,7 @@ class commonViews {
         ?>
         <nav class="navbar">
             <a href="index.php?router=accueil" class="logo">
-                <img src="View/assets/logo.png" alt="LRE Logo" width="120px">
+                <img src="View/assets/logo-removebg-preview.png" alt="LRE Logo">
             </a>
             <div class="nav-links">
                 <a href="index.php?router=accueil">Accueil</a>
@@ -43,7 +43,7 @@ class commonViews {
         ?>
         <nav class="navbar">
             <a href="index.php?router=accueil" class="logo">
-                <img src="View/assets/logo.png" alt="LRE Logo" width="120px">
+                <img src="View/assets/logo.png" alt="LRE Logo">
             </a>
             <div class="nav-links">
                 <a href="index.php?router=accueil">Accueil</a>
@@ -85,7 +85,7 @@ class commonViews {
         ?>
         <nav class="navbar">
             <a href="index.php?router=accueil" class="logo">
-                <img src="View/assets/logo.png" alt="LRE Logo" width="120px">
+                <img src="View/assets/logo.png" alt="LRE Logo">
             </a>
             <div class="nav-links">
                 <a href="index.php?router=accueil">Accueil</a>
@@ -127,7 +127,7 @@ class commonViews {
         <footer class="footer">
             <div class="footer-content">
                 <div class="footer-section">
-                    <img src="View/assets/logo.png" alt="LRE Logo" width="150px">
+                    <img src="View/assets/logo-removebg-preview.png" alt="LRE Logo" class="footer-logo">
                     <p>Le Laboratoire de Recherche ESI (LRE) est un pôle d'excellence dédié à la recherche en informatique avancée.</p>
                     <div class="social-media">
                         <a href="#"><i class="fa-brands fa-facebook-f"></i></a>

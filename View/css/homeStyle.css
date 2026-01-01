@@ -41,18 +41,15 @@
 .slider-header {
     position: absolute;
     top: 2rem;
-    left: 5%;
-    right: 5%;
+    left: 0;
+    right: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    z-index: 10;
+    padding: 0 4rem;
+    z-index: 2;
 }
 
-.hero-logo {
-    height: 80px;
-    filter: brightness(0) invert(1);
-}
 
 .slider-header .social-media {
     display: flex;

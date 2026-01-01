@@ -19,7 +19,8 @@ class homeController {
         
         $query = "SELECT * FROM carousel_items WHERE active = 1 ORDER BY ordre ASC";
         $stmt = $db->query($pdo, $query);
-        $slides = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = $stmt->get_result();
+        $slides = $result->fetch_all(MYSQLI_ASSOC);
         
         header('Content-Type: application/json');
         echo json_encode($slides);
@@ -32,15 +33,39 @@ class homeController {
         $db = new dataBaseModel();
         $pdo = $db->connexion();
         
+        // News = Past Events (Recent activities "Actualités")
+        $query = "SELECT e.* FROM events e 
+                  WHERE e.date_event <= NOW() 
+                  ORDER BY e.date_event DESC 
+                  LIMIT 6";
+        $stmt = $db->query($pdo, $query);
+        $result = $stmt->get_result();
+        $news = $result->fetch_all(MYSQLI_ASSOC);
+        
+        header('Content-Type: application/json');
+        echo json_encode($news);
+        
+        $db->deconnexion($pdo);
+    }
+
+    public function getEventsData() {
+        require_once("Model/dataBaseModel.php");
+        $db = new dataBaseModel();
+        $pdo = $db->connexion();
+        
+        // Events = Future Events ("Événements à Venir")
+        // Note: Using 2024 as fallback if NOW is too far ahead for demo data, 
+        // but since we updated SQL to 2026, NOW() should work fine.
         $query = "SELECT e.* FROM events e 
                   WHERE e.date_event > NOW() 
                   ORDER BY e.date_event ASC 
                   LIMIT 6";
         $stmt = $db->query($pdo, $query);
-        $news = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $result = $stmt->get_result();
+        $events = $result->fetch_all(MYSQLI_ASSOC);
         
         header('Content-Type: application/json');
-        echo json_encode($news);
+        echo json_encode($events);
         
         $db->deconnexion($pdo);
     }

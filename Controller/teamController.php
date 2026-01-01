@@ -10,7 +10,30 @@ class teamController {
         $director = $model->getDirector();
         
         $view = new teamsView();
+        $view = new teamsView();
         $view->afficherEquipes($teams, $director);
+    }
+
+    public function afficherDetailsEquipe() {
+        $id = $_GET['id'] ?? 0;
+        if (!$id) {
+            header("Location: index.php?router=equipes");
+            exit();
+        }
+
+        $model = new teamModel();
+        $team = $model->getTeam($id);
+        
+        if (!$team) {
+            header("Location: index.php?router=equipes");
+            exit();
+        }
+
+        $members = $model->getTeamMembers($id);
+        $publications = $model->getTeamPublications($id);
+        
+        $view = new teamsView();
+        $view->afficherDetailsEquipe($team, $members, $publications);
     }
     
     public function afficherMembreProfil() {
