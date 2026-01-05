@@ -3,16 +3,30 @@ require_once("View/adminDashboardView.php");
 
 class adminController {
     public function afficherDashboard() {
-        // Will implement - show admin dashboard with 7 category cards
-        echo "Admin dashboard - coming soon";
+        $view = new adminDashboardView();
+        $view->afficherDashboard();
     }
     
     public function gererUtilisateurs() {
-        // Will implement - user management
+        require_once("Model/userModel.php");
+        require_once("View/adminUsersView.php");
+        
+        $model = new userModel();
+        $users = $model->getAllUsers();
+        
+        $view = new adminUsersView();
+        $view->afficherGestionUtilisateurs($users);
     }
     
     public function gererEquipes() {
-        // Will implement - team management
+        require_once("Model/teamModel.php");
+        require_once("View/adminTeamsView.php");
+        
+        $model = new teamModel();
+        $teams = $model->getAllTeams();
+        
+        $view = new adminTeamsView();
+        $view->afficherGestionEquipes($teams);
     }
     
     public function gererProjets() {

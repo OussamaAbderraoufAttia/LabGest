@@ -37,7 +37,7 @@ body {
 }
 
 .navbar .logo img {
-    height: 50px;
+    height: 100px;
     width: auto;
     object-fit: contain;
     /* Ensure no background color causing white box */
@@ -45,7 +45,7 @@ body {
 }
 
 .footer-logo {
-    height: 60px;
+    height: 100px;
     width: auto;
     object-fit: contain;
     margin-bottom: 1rem;
@@ -55,7 +55,7 @@ body {
 /* Hero section logo */
 /* Hero section logo */
 .hero-logo {
-    height: 80px !important;
+    height: 100px !important;
     width: auto !important;
     max-width: 200px !important;
     object-fit: contain !important;
@@ -82,12 +82,12 @@ body {
 }
 
 .navbar .logo img {
-    height: 50px;
+    height: 100px;
     transition: var(--transition);
 }
 
 .navbar .logo img:hover {
-    transform: scale(1.05);
+    transform: scale(1.1);
 }
 
 .nav-links {

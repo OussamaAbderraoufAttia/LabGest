@@ -78,9 +78,27 @@ class teamModel {
     // Get laboratory director
     public function getDirector() {
         $conn = $this->db->connexion();
-        $query = "SELECT u.* FROM users u WHERE u.role = 'admin' LIMIT 1";
+        // Fetch director ID from settings table, or fallback if settings empty
+        $query = "SELECT u.* 
+                  FROM users u 
+                  JOIN settings s ON s.directeur_labo_id = u.id_user 
+                  LIMIT 1";
         $result = $conn->query($query);
-        $director = $result->fetch_assoc();
+        
+        if ($result && $result->num_rows > 0) {
+            $director = $result->fetch_assoc();
+        } else {
+            // Fallback: Find a professor or the admin if no settings
+            $queryFallback = "SELECT * FROM users WHERE grade LIKE '%Prof%' LIMIT 1";
+            $resFallback = $conn->query($queryFallback);
+            if ($resFallback && $resFallback->num_rows > 0) {
+                 $director = $resFallback->fetch_assoc();
+            } else {
+                 // Last resort
+                 $director = ['nom' => 'Directeur', 'prenom' => 'Non Défini', 'grade' => 'N/A', 'photo' => 'View/assets/default_avatar.png'];
+            }
+        }
+        
         $this->db->deconnexion($conn);
         return $director;
     }
