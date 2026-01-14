@@ -43,8 +43,14 @@ function updateSlide(index) {
     currentSlide = index;
     const slide = slides[index];
 
-    // Update background image class
-    $('.hero-slider').removeClass('slide-0 slide-1 slide-2').addClass('slide-' + index);
+    // Update background image dynamic from DB
+    // Use the linear gradient overlay + the image URL
+    $('.hero-slider').css('background-image',
+        `linear-gradient(rgba(102, 126, 234, 0.85), rgba(118, 75, 162, 0.85)), url('${slide.image_url}')`
+    );
+
+    // Remove old classes just in case
+    $('.hero-slider').removeClass('slide-0 slide-1 slide-2');
 
     $('#slideTitle').fadeOut(300, function () {
         $(this).text(slide.titre || 'Laboratoire de Recherche ESI').fadeIn(300);
@@ -161,6 +167,7 @@ function loadPartners() {
 }
 
 // Load events in events section
+// Load events in events section
 function loadEvents() {
     $.ajax({
         url: 'index.php?router=get-events', // Corrected endpoint
@@ -191,6 +198,7 @@ function loadEvents() {
                         <h4>${event.titre}</h4>
                         <p><i class="fa-solid fa-location-dot"></i> ${event.lieu || 'ESI'}</p>
                         <span class="event-type">${event.type || 'Événement'}</span>
+                        <a href="index.php?router=event_details&id=${event.id_event}" class="btn-primary" style="display:block; margin-top:10px; font-size:0.8rem; padding: 5px 10px; text-align:center;">Détails & Inscription</a>
                     </div>
                 `);
 

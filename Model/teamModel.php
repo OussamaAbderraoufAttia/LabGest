@@ -117,5 +117,47 @@ class teamModel {
         $this->db->deconnexion($conn);
         return $team;
     }
+    // Add Team
+    public function addTeam($nom, $description, $chef_id, $photo) {
+        $conn = $this->db->connexion();
+        $query = "INSERT INTO teams (nom, description, chef_id, photo) VALUES (?, ?, ?, ?)";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("ssis", $nom, $description, $chef_id, $photo);
+        $result = $stmt->execute();
+        $this->db->deconnexion($conn);
+        return $result;
+    }
+
+    // Update Team
+    public function updateTeam($id, $nom, $description, $chef_id, $photo) {
+        $conn = $this->db->connexion();
+        $query = "UPDATE teams SET nom=?, description=?, chef_id=?, photo=? WHERE id_team=?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("ssisi", $nom, $description, $chef_id, $photo, $id);
+        $result = $stmt->execute();
+        $this->db->deconnexion($conn);
+        return $result;
+    }
+
+    // Delete Team
+    public function deleteTeam($id) {
+        $conn = $this->db->connexion();
+        $query = "DELETE FROM teams WHERE id_team = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("i", $id);
+        $result = $stmt->execute();
+        $this->db->deconnexion($conn);
+        return $result;
+    }
+
+    // Get total teams
+    public function getTotalTeams() {
+        $conn = $this->db->connexion();
+        $query = "SELECT COUNT(*) as count FROM teams";
+        $result = $conn->query($query);
+        $row = $result->fetch_assoc();
+        $this->db->deconnexion($conn);
+        return $row['count'] ?? 0;
+    }
 }
 ?>

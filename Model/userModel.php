@@ -127,5 +127,98 @@ class userModel {
         $this->db->deconnexion($conn);
         return $users;
     }
+
+
+    // Get total users count
+    public function getTotalUsers() {
+        $conn = $this->db->connexion();
+        $query = "SELECT COUNT(*) as count FROM users";
+        $result = $conn->query($query);
+        $row = $result->fetch_assoc();
+        $this->db->deconnexion($conn);
+        return $row['count'] ?? 0;
+    }
+
+    // Get users with filters
+    public function getUsersWithFilters($role = null, $specialite = null, $search = null) {
+        $conn = $this->db->connexion();
+        $query = "SELECT * FROM users WHERE 1=1";
+        $params = [];
+        $types = "";
+
+        if ($role) {
+            $query .= " AND role = ?";
+            $params[] = $role;
+            $types .= "s";
+        }
+
+        if ($specialite) {
+            $query .= " AND specialite = ?";
+            $params[] = $specialite;
+            $types .= "s";
+        }
+
+        if ($search) {
+            $searchTerm = "%$search%";
+            $query .= " AND (nom LIKE ? OR prenom LIKE ? OR username LIKE ? OR email LIKE ?)";
+            $params = array_merge($params, [$searchTerm, $searchTerm, $searchTerm, $searchTerm]);
+            $types .= "ssss";
+        }
+
+        $query .= " ORDER BY nom, prenom";
+        
+        if (count($params) > 0) {
+            $stmt = $conn->prepare($query);
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $result = $stmt->get_result();
+        } else {
+            $result = $conn->query($query);
+        }
+
+        $users = [];
+        while ($row = $result->fetch_assoc()) {
+            $users[] = $row;
+        }
+        $this->db->deconnexion($conn);
+        return $users;
+    }
+
+    // Get specialites
+    public function getSpecialites() {
+        $conn = $this->db->connexion();
+        $query = "SELECT DISTINCT specialite FROM users WHERE specialite IS NOT NULL AND specialite != '' ORDER BY specialite";
+        $result = $conn->query($query);
+        $specialites = [];
+        while ($row = $result->fetch_assoc()) {
+            if ($row['specialite']) {
+                $specialites[] = $row['specialite'];
+            }
+        }
+        $this->db->deconnexion($conn);
+        return $specialites;
+    }
+
+    // Update user (Admin)
+    public function updateUser($userId, $nom, $prenom, $email, $role, $grade, $specialite) {
+        $conn = $this->db->connexion();
+        $query = "UPDATE users SET nom = ?, prenom = ?, email = ?, role = ?, grade = ?, specialite = ? WHERE id_user = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("ssssssi", $nom, $prenom, $email, $role, $grade, $specialite, $userId);
+        $result = $stmt->execute();
+        $this->db->deconnexion($conn);
+        return $result;
+    }
+
+    // Suspend user (Admin)
+    public function suspendUser($userId) {
+        $conn = $this->db->connexion();
+        $query = "UPDATE users SET role = 'suspend' WHERE id_user = ?";
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param("i", $userId);
+        $result = $stmt->execute();
+        $this->db->deconnexion($conn);
+        return $result;
+    }
 }
 ?>

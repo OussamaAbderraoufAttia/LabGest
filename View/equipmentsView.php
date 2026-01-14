@@ -1,5 +1,7 @@
 <?php
 require_once("commonViews.php");
+require_once("View/Components/CardView.php");
+require_once("View/Components/TableView.php");
 
 class equipmentsView {
     
@@ -29,44 +31,47 @@ class equipmentsView {
                 <div class="equipments-container">
                     <h1 class="page-title">Équipements et Ressources</h1>
                     
-                    <div class="equipments-grid">
-                        <?php if (empty($equipments)): ?>
-                            <p class="no-results">Aucun équipement disponible.</p>
-                        <?php else: ?>
-                            <?php foreach ($equipments as $equip): ?>
-                                <div class="equipment-card fade-in-up">
-                                    <div class="equip-icon">
-                                        <i class="fa-solid fa-laptop"></i>
-                                    </div>
-                                    
-                                    <h3><?= htmlspecialchars($equip['nom']) ?></h3>
-                                    
-                                    <div class="equip-details">
-                                        <p><strong>Type:</strong> <?= htmlspecialchars($equip['type']) ?></p>
-                                        <p><strong>Localisation:</strong> <?= htmlspecialchars($equip['localisation']) ?></p>
-                                        <p class="equip-status status-<?= $equip['etat'] ?>">
-                                            <i class="fa-solid fa-circle"></i> 
-                                            <?= ucfirst($equip['etat']) ?>
-                                        </p>
-                                    </div>
-                                    
-                                    <?php if ($equip['description']): ?>
-                                        <p class="equip-description"><?= htmlspecialchars($equip['description']) ?></p>
-                                    <?php endif; ?>
-                                    
-                                    <?php if ($equip['etat'] === 'disponible'): ?>
-                                        <button class="btn-primary" onclick="openReservationModal(<?= $equip['id_equip'] ?>, '<?= htmlspecialchars($equip['nom']) ?>')">
-                                            <i class="fa-solid fa-calendar-check"></i> Réserver
-                                        </button>
-                                    <?php else: ?>
-                                        <button class="btn-secondary" disabled>
-                                            <i class="fa-solid fa-ban"></i> Indisponible
-                                        </button>
-                                    <?php endif; ?>
+                    <?php
+                    $statusLabels = [
+                        'disponible' => 'Disponible',
+                        'reserve' => 'Réservé',
+                        'en_maintenance' => 'En Maintenance',
+                        'hors_service' => 'Hors Service'
+                    ];
+                    
+                    CardView::render($equipments, function($equip) use ($statusLabels) {
+                        $statusLabel = $statusLabels[$equip['etat']] ?? ucfirst($equip['etat']);
+                        $reserveBtn = ($equip['etat'] === 'disponible') 
+                            ? '<button class="btn-primary" onclick="openReservationModal(' . $equip['id_equip'] . ', \'' . htmlspecialchars($equip['nom'], ENT_QUOTES) . '\')">
+                                    <i class="fa-solid fa-calendar-check"></i> Réserver
+                               </button>'
+                            : '<button class="btn-secondary" disabled>
+                                    <i class="fa-solid fa-ban"></i> Indisponible
+                               </button>';
+                        
+                        return '
+                            <div class="equipment-card fade-in-up">
+                                <div class="equip-icon">
+                                    <i class="fa-solid fa-laptop"></i>
                                 </div>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </div>
+                                
+                                <h3>' . htmlspecialchars($equip['nom']) . '</h3>
+                                
+                                <div class="equip-details">
+                                    <p><strong>Type:</strong> ' . htmlspecialchars($equip['type']) . '</p>
+                                    <p><strong>Localisation:</strong> ' . htmlspecialchars($equip['localisation']) . '</p>
+                                    <p class="equip-status status-' . $equip['etat'] . '">
+                                        <i class="fa-solid fa-circle"></i> ' . $statusLabel . '
+                                    </p>
+                                </div>
+                                
+                                ' . (!empty($equip['description']) ? '<p class="equip-description">' . htmlspecialchars($equip['description']) . '</p>' : '') . '
+                                
+                                ' . $reserveBtn . '
+                            </div>
+                        ';
+                    }, 'equipmentsGrid', 'equipments-grid');
+                    ?>
                 </div>
                 
                 <!-- Reservation Modal -->
@@ -134,21 +139,41 @@ class equipmentsView {
                 <div class="reservations-container">
                     <h1 class="page-title">Mes Réservations</h1>
                     
-                    <div class="reservations-list">
-                        <?php if (empty($reservations)): ?>
-                            <p class="no-results">Aucune réservation.</p>
-                        <?php else: ?>
-                            <?php foreach ($reservations as $res): ?>
-                                <div class="reservation-card">
-                                    <h3><?= htmlspecialchars($res['equip_nom']) ?></h3>
-                                    <p><strong>Type:</strong> <?= htmlspecialchars($res['equip_type']) ?></p>
-                                    <p><strong>Du:</strong> <?= date('d/m/Y H:i', strtotime($res['date_debut'])) ?></p>
-                                    <p><strong>Au:</strong> <?= date('d/m/Y H:i', strtotime($res['date_fin'])) ?></p>
-                                    <span class="status-badge status-<?= $res['status'] ?>"><?= ucfirst($res['status']) ?></span>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </div>
+                    <?php
+                    $statusLabels = [
+                        'confirme' => 'Confirmé',
+                        'annule' => 'Annulé',
+                        'en_attente' => 'En Attente',
+                        'refuse' => 'Refusé',
+                        'termine' => 'Terminé'
+                    ];
+                    
+                    $columns = [
+                        'equip_nom' => ['label' => 'Équipement', 'renderer' => function($row) {
+                            return '<strong>' . htmlspecialchars($row['equip_nom']) . '</strong><br><small style="color:#718096;">' . htmlspecialchars($row['equip_type']) . '</small>';
+                        }],
+                        'date_debut' => ['label' => 'Du', 'renderer' => function($row) {
+                            return date('d/m/Y H:i', strtotime($row['date_debut']));
+                        }],
+                        'date_fin' => ['label' => 'Au', 'renderer' => function($row) {
+                            return date('d/m/Y H:i', strtotime($row['date_fin']));
+                        }],
+                        'status' => ['label' => 'Statut', 'renderer' => function($row) use ($statusLabels) {
+                            $statusColors = [
+                                'confirme' => '#48bb78',
+                                'annule' => '#e53e3e',
+                                'en_attente' => '#ecc94b',
+                                'refuse' => '#f6ad55',
+                                'termine' => '#a0aec0'
+                            ];
+                            $statusLabel = $statusLabels[$row['status']] ?? ucfirst($row['status']);
+                            $color = $statusColors[$row['status']] ?? '#cbd5e0';
+                            return '<span class="status-badge" style="background:' . $color . '; color:white; padding:4px 8px; border-radius:4px;">' . $statusLabel . '</span>';
+                        }]
+                    ];
+                    
+                    TableView::render($columns, $reservations, 'reservationsTable', 'reservations-list');
+                    ?>
                 </div>
                 
                 <?php $common->footer(); ?>

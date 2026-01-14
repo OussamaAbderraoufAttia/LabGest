@@ -1,5 +1,6 @@
 <?php
 require_once("commonViews.php");
+require_once("View/Components/CardView.php");
 
 class publicationsView {
     
@@ -17,7 +18,7 @@ class publicationsView {
         <?php
     }
     
-    public function afficherBase($publications, $years, $types, $filters) {
+    public function afficherBase($publications, $years, $types, $filters, $teams = [], $projects = []) {
         $common = new commonViews();
         ?>
         <!DOCTYPE html>
@@ -54,6 +55,24 @@ class publicationsView {
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+
+                            <select id="filterTeam" class="filter-select">
+                                <option value="">Toutes les équipes</option>
+                                <?php foreach ($teams as $team): ?>
+                                    <option value="<?= $team['id_team'] ?>" <?= (isset($filters['team_id']) && $filters['team_id'] == $team['id_team']) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($team['nom']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+
+                            <select id="filterProject" class="filter-select">
+                                <option value="">Tous les projets</option>
+                                <?php foreach ($projects as $project): ?>
+                                    <option value="<?= $project['id_project'] ?>" <?= (isset($filters['project_id']) && $filters['project_id'] == $project['id_project']) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($project['titre']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
                             
                             <button class="btn-primary" onclick="applyFilters()">
                                 <i class="fa-solid fa-filter"></i> Filtrer
@@ -65,41 +84,48 @@ class publicationsView {
                         </div>
                     </div>
                     
-                    <!-- Publications List -->
-                    <div class="publications-list">
-                        <?php if (empty($publications)): ?>
-                            <p class="no-results">Aucune publication trouvée.</p>
-                        <?php else: ?>
-                            <?php foreach ($publications as $pub): ?>
-                                <div class="publication-item fade-in-up">
-                                    <div class="pub-header">
-                                        <h3><?= htmlspecialchars($pub['titre']) ?></h3>
-                                        <span class="pub-type"><?= ucfirst($pub['type']) ?></span>
-                                    </div>
-                                    
-                                    <div class="pub-meta">
-                                        <span><i class="fa-solid fa-calendar"></i> <?= date('Y', strtotime($pub['date_publication'])) ?></span>
-                                        <?php if ($pub['conference']): ?>
-                                            <span><i class="fa-solid fa-building"></i> <?= htmlspecialchars($pub['conference']) ?></span>
-                                        <?php endif; ?>
-                                        <?php if ($pub['doi']): ?>
-                                            <span><i class="fa-solid fa-link"></i> DOI: <?= htmlspecialchars($pub['doi']) ?></span>
-                                        <?php endif; ?>
-                                    </div>
-                                    
-                                    <?php if ($pub['resume']): ?>
-                                        <p class="pub-resume"><?= htmlspecialchars(substr($pub['resume'], 0, 200)) ?>...</p>
-                                    <?php endif; ?>
-                                    
-                                    <?php if ($pub['fichier_pdf']): ?>
-                                        <a href="<?= htmlspecialchars($pub['fichier_pdf']) ?>" class="btn-download" target="_blank">
-                                            <i class="fa-solid fa-file-pdf"></i> Télécharger PDF
-                                        </a>
-                                    <?php endif; ?>
+                    <!-- Publications List using CardView -->
+                    <?php
+                    $typeLabels = [
+                        'article' => 'Article',
+                        'conference' => 'Conférence',
+                        'these' => 'Thèse',
+                        'memoire' => 'Mémoire',
+                        'rapport' => 'Rapport',
+                        'cours' => 'Cours',
+                        'livre' => 'Livre'
+                    ];
+                    
+                    CardView::render($publications, function($pub) use ($typeLabels) {
+                        $typeLabel = $typeLabels[$pub['type']] ?? ucfirst($pub['type']);
+                        $link = !empty($pub['lien_externe']) 
+                            ? '<span><a href="' . htmlspecialchars($pub['lien_externe']) . '" target="_blank" style="color:#667eea;"><i class="fa-solid fa-link"></i> Lien Externe</a></span>'
+                            : '';
+                        $conference = !empty($pub['conference']) 
+                            ? '<span><i class="fa-solid fa-building"></i> ' . htmlspecialchars($pub['conference']) . '</span>'
+                            : '';
+                        $resume = !empty($pub['resume'])
+                            ? '<p class="pub-resume">' . htmlspecialchars(substr($pub['resume'], 0, 200)) . '...</p>'
+                            : '';
+                        
+                        return '
+                            <div class="publication-item fade-in-up">
+                                <div class="pub-header">
+                                    <h3>' . htmlspecialchars($pub['titre']) . '</h3>
+                                    <span class="pub-type">' . $typeLabel . '</span>
                                 </div>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </div>
+                                
+                                <div class="pub-meta">
+                                    <span><i class="fa-solid fa-calendar"></i> ' . date('Y', strtotime($pub['date_publication'])) . '</span>
+                                    ' . $conference . '
+                                    ' . $link . '
+                                </div>
+                                
+                                ' . $resume . '
+                            </div>
+                        ';
+                    }, 'publicationsGrid', 'publications-list');
+                    ?>
                 </div>
                 
                 <script>
@@ -107,6 +133,8 @@ class publicationsView {
                         const search = document.getElementById('searchInput').value;
                         const year = document.getElementById('filterYear').value;
                         const type = document.getElementById('filterType').value;
+                        const team = document.getElementById('filterTeam').value;
+                        const project = document.getElementById('filterProject').value;
                         
                         let url = 'index.php?router=publications';
                         const params = [];
@@ -114,6 +142,8 @@ class publicationsView {
                         if (search) params.push('search=' + encodeURIComponent(search));
                         if (year) params.push('year=' + encodeURIComponent(year));
                         if (type) params.push('type=' + encodeURIComponent(type));
+                        if (team) params.push('team=' + encodeURIComponent(team));
+                        if (project) params.push('project=' + encodeURIComponent(project));
                         
                         if (params.length > 0) {
                             url += '&' + params.join('&');

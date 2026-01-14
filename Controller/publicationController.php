@@ -17,13 +17,27 @@ class publicationController {
         if (isset($_GET['search']) && $_GET['search'] !== '') {
             $filters['search'] = $_GET['search'];
         }
+        if (isset($_GET['team']) && $_GET['team'] !== '') {
+            $filters['team_id'] = $_GET['team'];
+        }
+        if (isset($_GET['project']) && $_GET['project'] !== '') {
+            $filters['project_id'] = $_GET['project'];
+        }
+        
+        require_once("Model/teamModel.php");
+        require_once("Model/projectModel.php");
+        
+        $teamModel = new teamModel();
+        $projModel = new projectModel();
         
         $publications = $model->getAllPublications($filters);
         $years = $model->getYears();
         $types = $model->getTypes();
+        $teams = $teamModel->getAllTeams();
+        $projects = $projModel->getAllProjects();
         
         $view = new publicationsView();
-        $view->afficherBase($publications, $years, $types, $filters);
+        $view->afficherBase($publications, $years, $types, $filters, $teams, $projects);
     }
     
     public function searchPublications() {

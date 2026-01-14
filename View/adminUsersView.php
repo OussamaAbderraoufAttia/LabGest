@@ -65,27 +65,127 @@ class adminUsersView extends adminDashboardView {
                 </main>
             </div>
             
-            <!-- Modal (Simplified Placeholder) -->
+            <!-- Modal -->
             <div id="userModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; justify-content:center; align-items:center;">
-                <div style="background:white; padding:30px; border-radius:12px; width:500px; max-width:90%;">
-                    <h3 style="margin-top:0;">Gérer Utilisateur</h3>
-                    <p>Fonctionnalité complète a venir dans la prochaine étape (CRUD).</p>
-                    <div style="text-align:right; margin-top:20px;">
-                        <button onclick="document.getElementById('userModal').style.display='none'" class="btn btn-secondary">Fermer</button>
-                    </div>
+                <div style="background:white; padding:30px; border-radius:12px; width:600px; max-width:90%; position:relative;">
+                    <button onclick="closeUserModal()" style="position:absolute; top:20px; right:20px; background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+                    
+                    <h3 id="modalTitle" style="margin-top:0; margin-bottom:20px; color:#2d3748;">Ajouter un Utilisateur</h3>
+                    
+                    <form id="userForm" method="POST" action="index.php?router=admin-users">
+                        <input type="hidden" name="action" id="userAction" value="add">
+                        <input type="hidden" name="id_user" id="userId">
+                        
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label style="display:block; margin-bottom:5px; font-weight:600;">Nom</label>
+                                <input type="text" name="nom" id="nom" required style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:6px;">
+                            </div>
+                            <div class="form-group">
+                                <label style="display:block; margin-bottom:5px; font-weight:600;">Prénom</label>
+                                <input type="text" name="prenom" id="prenom" required style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:6px;">
+                            </div>
+                            <div class="form-group">
+                                <label style="display:block; margin-bottom:5px; font-weight:600;">Email</label>
+                                <input type="email" name="email" id="email" required style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:6px;">
+                            </div>
+                            <div class="form-group">
+                                <label style="display:block; margin-bottom:5px; font-weight:600;">Username</label>
+                                <input type="text" name="username" id="username" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:6px;">
+                            </div>
+                            <div class="form-group">
+                                <label style="display:block; margin-bottom:5px; font-weight:600;">Role</label>
+                                <select name="role" id="role" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:6px;">
+                                    <option value="enseignant-chercheur">Enseignant-Chercheur</option>
+                                    <option value="doctorant">Doctorant</option>
+                                    <option value="etudiant">Etudiant</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="invite">Invité</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="display:block; margin-bottom:5px; font-weight:600;">Grade</label>
+                                <input type="text" name="grade" id="grade" placeholder="ex: Professeur" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:6px;">
+                            </div>
+                            <div class="form-group">
+                                <label style="display:block; margin-bottom:5px; font-weight:600;">Poste</label>
+                                <input type="text" name="poste" id="poste" placeholder="ex: Directeur" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:6px;">
+                            </div>
+                            <div class="form-group" id="pwdGroup">
+                                <label style="display:block; margin-bottom:5px; font-weight:600;">Mot de Passe</label>
+                                <input type="password" name="password" id="password" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:6px;">
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top:25px; text-align:right;">
+                            <button type="button" onclick="closeUserModal()" class="btn btn-secondary" style="background:#edf2f7; color:#4a5568; margin-right:10px;">Annuler</button>
+                            <button type="submit" class="btn btn-primary">Enregistrer</button>
+                        </div>
+                    </form>
                 </div>
             </div>
             
             <script>
+                const usersData = <?php echo json_encode($users); ?>;
+
                 function openUserModal() {
                     document.getElementById('userModal').style.display = 'flex';
+                    document.getElementById('userAction').value = 'add';
+                    document.getElementById('modalTitle').textContent = 'Ajouter un Utilisateur';
+                    document.getElementById('userForm').reset();
+                    document.getElementById('username').required = true;
+                    document.getElementById('password').required = true;
+                    document.getElementById('pwdGroup').style.display = 'block';
+                    document.getElementById('username').disabled = false;
                 }
+                
+                function closeUserModal() {
+                    document.getElementById('userModal').style.display = 'none';
+                }
+                
                 function editUser(id) {
-                    alert('Edit user ' + id);
+                    const user = usersData.find(u => u.id_user == id);
+                    if (!user) return;
+                    
+                    document.getElementById('userModal').style.display = 'flex';
+                    document.getElementById('userAction').value = 'edit';
+                    document.getElementById('modalTitle').textContent = 'Modifier Utilisateur';
+                    document.getElementById('userId').value = user.id_user;
+                    
+                    document.getElementById('nom').value = user.nom;
+                    document.getElementById('prenom').value = user.prenom;
+                    document.getElementById('email').value = user.email;
+                    document.getElementById('username').value = user.username;
+                    document.getElementById('username').disabled = true; // Prevent changing username
+                    document.getElementById('role').value = user.role;
+                    document.getElementById('grade').value = user.grade;
+                    document.getElementById('poste').value = user.poste;
+                    
+                    // Hide password field for edit (or make optional)
+                    document.getElementById('pwdGroup').style.display = 'none';
+                    document.getElementById('password').required = false;
                 }
+                
                 function deleteUser(id) {
                     if(confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
-                        alert('Delete user ' + id);
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = 'index.php?router=admin-users';
+                        
+                        const inputAction = document.createElement('input');
+                        inputAction.type = 'hidden';
+                        inputAction.name = 'action';
+                        inputAction.value = 'delete';
+                        
+                        const inputId = document.createElement('input');
+                        inputId.type = 'hidden';
+                        inputId.name = 'id_user';
+                        inputId.value = id;
+                        
+                        form.appendChild(inputAction);
+                        form.appendChild(inputId);
+                        document.body.appendChild(form);
+                        form.submit();
                     }
                 }
                 

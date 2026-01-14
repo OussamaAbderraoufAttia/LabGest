@@ -67,9 +67,70 @@ if (isset($_GET['router'])) {
             $controller->afficherEquipes();
             break;
             
-        case 'evenements':
+        case 'events': // Changed from 'evenements' to match controller logic
+            require_once("Controller/eventController.php");
             $controller = new eventController();
-            $controller->afficherEvenements();
+            $controller->afficherPage();
+            break;
+            
+        case 'event_details':
+            require_once("Controller/eventController.php");
+            $controller = new eventController();
+            $controller->afficherDetails();
+            break;
+            
+        case 'event_register':
+            require_once("Controller/eventController.php");
+            $controller = new eventController();
+            $controller->inscrire();
+            break;
+            
+        case 'event_inscrits':
+            require_once("Controller/eventController.php");
+            $controller = new eventController();
+            $controller->afficherInscrits();
+            break;
+
+        case 'actualites':
+            require_once("Controller/actualitesController.php");
+            $controller = new actualitesController();
+            $controller->afficherPage();
+            break;
+
+        case 'actualite_detail':
+            require_once("Controller/actualitesController.php");
+            $controller = new actualitesController();
+            $controller->afficherDetail();
+            break;
+
+        case 'actualites_admin':
+            require_once("Controller/actualitesController.php");
+            $controller = new actualitesController();
+            $controller->afficherAdmin();
+            break;
+
+        case 'actualite_add':
+            require_once("Controller/actualitesController.php");
+            $controller = new actualitesController();
+            $controller->addActualite();
+            break;
+
+        case 'actualite_edit':
+            require_once("Controller/actualitesController.php");
+            $controller = new actualitesController();
+            $controller->editActualite();
+            break;
+
+        case 'actualite_delete':
+            require_once("Controller/actualitesController.php");
+            $controller = new actualitesController();
+            $controller->deleteActualite();
+            break;
+
+        case 'actualite_archive':
+            require_once("Controller/actualitesController.php");
+            $controller = new actualitesController();
+            $controller->archiveActualite();
             break;
             
         case 'contact':
@@ -123,6 +184,57 @@ if (isset($_GET['router'])) {
                 exit();
             }
             break;
+
+        // ============= PROJECT MANAGEMENT =============
+        case 'project-add-member':
+            if (isset($_SESSION['user']) || isset($_SESSION['admin'])) {
+                $controller = new projectController();
+                $controller->addMember();
+            } else {
+                header("Location: index.php?router=login");
+                exit();
+            }
+            break;
+
+        case 'project-remove-member':
+            if (isset($_SESSION['user']) || isset($_SESSION['admin'])) {
+                $controller = new projectController();
+                $controller->removeMember();
+            } else {
+                header("Location: index.php?router=login");
+                exit();
+            }
+            break;
+
+        case 'project-quit':
+            if (isset($_SESSION['user']) || isset($_SESSION['admin'])) {
+                $controller = new projectController();
+                $controller->quitProject();
+            } else {
+                header("Location: index.php?router=login");
+                exit();
+            }
+            break;
+
+        case 'project-close':
+            if (isset($_SESSION['admin'])) {
+                $controller = new projectController();
+                $controller->closeProject();
+            } else {
+                header("Location: index.php?router=accueil");
+                exit();
+            }
+            break;
+
+        case 'project-add-publication':
+            if (isset($_SESSION['user']) || isset($_SESSION['admin'])) {
+                $controller = new projectController();
+                $controller->addPublication();
+            } else {
+                header("Location: index.php?router=login");
+                exit();
+            }
+            break;
             
         case 'update-profile':
             if (isset($_SESSION['user']) || isset($_SESSION['admin'])) {
@@ -157,7 +269,157 @@ if (isset($_GET['router'])) {
             break;
             
         // ============= ADMIN DASHBOARD =============
-        case 'admin-dashboard':
+        case 'admin':
+        case 'admin_dashboard':
+            if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'admin') {
+                require_once("Controller/adminController.php");
+                $controller = new adminController();
+                $controller->dashboard();
+            } else {
+                header('Location: index.php?router=accueil');
+                exit;
+            }
+            break;
+
+        // ============= ADMIN USERS =============
+        case 'admin_users':
+            if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'admin') {
+                require_once("Controller/adminController.php");
+                $controller = new adminController();
+                $controller->manageUsers();
+            } else {
+                header('Location: index.php?router=accueil');
+                exit;
+            }
+            break;
+
+        case 'admin_users_add':
+            if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'admin') {
+                require_once("Controller/adminController.php");
+                $controller = new adminController();
+                $controller->addUser();
+            } else {
+                header('Location: index.php?router=accueil');
+                exit;
+            }
+            break;
+
+        case 'admin_users_edit':
+            if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'admin') {
+                require_once("Controller/adminController.php");
+                $controller = new adminController();
+                $controller->editUser();
+            } else {
+                header('Location: index.php?router=accueil');
+                exit;
+            }
+            break;
+
+        case 'admin_users_delete':
+            if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'admin') {
+                require_once("Controller/adminController.php");
+                $controller = new adminController();
+                $controller->deleteUser();
+            } else {
+                header('Location: index.php?router=accueil');
+                exit;
+            }
+            break;
+
+        case 'admin_users_suspend':
+            if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'admin') {
+                require_once("Controller/adminController.php");
+                $controller = new adminController();
+                $controller->suspendUser();
+            } else {
+                header('Location: index.php?router=accueil');
+                exit;
+            }
+            break;
+
+        // ============= ADMIN TEAMS =============
+        case 'admin_teams':
+            if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'admin') {
+                require_once("Controller/adminController.php");
+                $controller = new adminController();
+                $controller->manageTeams();
+            } else {
+                header('Location: index.php?router=accueil');
+                exit;
+            }
+            break;
+
+        // ============= ADMIN EQUIPMENT =============
+        case 'admin_equipment':
+            if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'admin') {
+                require_once("Controller/adminController.php");
+                $controller = new adminController();
+                $controller->manageEquipment();
+            } else {
+                header('Location: index.php?router=accueil');
+                exit;
+            }
+            break;
+
+        // ============= ADMIN PUBLICATIONS =============
+        case 'admin_publications':
+            if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'admin') {
+                require_once("Controller/adminController.php");
+                $controller = new adminController();
+                $controller->managePublications();
+            } else {
+                header('Location: index.php?router=accueil');
+                exit;
+            }
+            break;
+
+        // ============= ADMIN SETTINGS =============
+        case 'admin_settings':
+            if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'admin') {
+                require_once("Controller/adminController.php");
+                $controller = new adminController();
+                $controller->settings();
+            } else {
+                header('Location: index.php?router=accueil');
+                exit;
+            }
+            break;
+
+        // ============= PDF EXPORT ROUTES =============
+        case 'admin_report_projects_pdf':
+            if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'admin') {
+                require_once("Controller/adminController.php");
+                $controller = new adminController();
+                $controller->generateProjectReportPDF();
+            } else {
+                header('Location: index.php?router=accueil');
+                exit;
+            }
+            break;
+
+        case 'admin_report_publications_pdf':
+            if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'admin') {
+                require_once("Controller/adminController.php");
+                $controller = new adminController();
+                $controller->generatePublicationReportPDF();
+            } else {
+                header('Location: index.php?router=accueil');
+                exit;
+            }
+            break;
+
+        case 'admin_report_equipment_pdf':
+            if (isset($_SESSION['user_id']) && $_SESSION['role'] === 'admin') {
+                require_once("Controller/adminController.php");
+                $controller = new adminController();
+                $controller->generateEquipmentReportPDF();
+            } else {
+                header('Location: index.php?router=accueil');
+                exit;
+            }
+            break;
+            
+        // ============= LEGACY ADMIN ROUTES (keep for compatibility) =============
             if (isset($_SESSION['admin'])) {
                 $controller = new adminController();
                 $controller->afficherDashboard();
@@ -268,6 +530,18 @@ if (isset($_GET['router'])) {
             $controller->checkAvailability();
             break;
             
+        case 'get-notifications':
+            require_once("Controller/notificationController.php");
+            $controller = new notificationController();
+            $controller->getNotifications();
+            break;
+            
+        case 'mark-notification-read':
+            require_once("Controller/notificationController.php");
+            $controller = new notificationController();
+            $controller->markRead();
+            break;
+
         // ============= DEFAULT =============
         default:
             $controller = new homeController();

@@ -29,7 +29,7 @@ class adminDashboardView {
             </div>
             
             <div class="sidebar-nav">
-                <a href="index.php?router=admin-dashboard" class="nav-item <?= $activePage == 'dashboard' ? 'active' : '' ?>">
+                <a href="index.php?router=admin_dashboard" class="nav-item <?= $activePage == 'dashboard' ? 'active' : '' ?>">
                     <i class="fa-solid fa-chart-line"></i> <span>Tableau de Bord</span>
                 </a>
                 <a href="index.php?router=admin-users" class="nav-item <?= $activePage == 'users' ? 'active' : '' ?>">

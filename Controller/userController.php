@@ -24,10 +24,13 @@ class userController {
                     session_start();
                 }
                 
-                // Store user data based on role - FIXED: Check 'role' field, not username
+                // Store user data based on role
+                $_SESSION['user_id'] = $user['id_user'];
+                $_SESSION['role'] = $user['role'];
+                
                 if ($user['role'] === 'admin') {
                     $_SESSION['admin'] = $user;
-                    header("Location: index.php?router=admin-dashboard");
+                    header("Location: index.php?router=admin_dashboard");
                 } else {
                     $_SESSION['user'] = $user;
                     header("Location: index.php?router=profil");
