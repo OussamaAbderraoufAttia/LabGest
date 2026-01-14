@@ -43,8 +43,8 @@ class adminTeamsView extends adminDashboardView {
                             }],
                             'actions' => ['label' => 'Actions', 'renderer' => function($row) {
                                 return '
-                                <a href="index.php?router=equipes&id='.$row['id_team'].'" class="btn-icon" style="color: #4299e1;" target="_blank" title="Voir Public">
-                                    <i class="fa-solid fa-eye"></i>
+                                <a href="index.php?router=equipe-details&id='.$row['id_team'].'" class="btn-icon" style="color: #4299e1;" title="Gérer Membres">
+                                    <i class="fa-solid fa-users"></i>
                                 </a>
                                 <button class="btn-icon" style="color: #667eea; margin: 0 10px;" onclick="editTeam('.$row['id_team'].')" title="Modifier">
                                     <i class="fa-solid fa-pen-to-square"></i>

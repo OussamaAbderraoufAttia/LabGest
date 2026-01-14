@@ -164,5 +164,15 @@ class eventModel {
         $this->db->deconnexion($conn);
         return $row['count'] ?? 0;
     }
+
+    // Get last event ID
+    public function getLastEventId() {
+        $conn = $this->db->connexion();
+        $query = "SELECT id_event FROM events ORDER BY id_event DESC LIMIT 1";
+        $result = $conn->query($query);
+        $row = $result->fetch_assoc();
+        $this->db->deconnexion($conn);
+        return $row['id_event'] ?? 0;
+    }
 }
 ?>

@@ -78,6 +78,7 @@ class loginView {
                             <p><strong>Comptes de test :</strong></p>
                             <p>Admin : <code>admin</code> / <code>admin</code></p>
                             <p>Utilisateur : <code>user</code> / <code>user</code></p>
+                            <p><strong>Chef d'Équipe :</strong> <code>n.belkacem</code> / <code>password123</code></p>
                         </div>
                     </div>
                 </div>

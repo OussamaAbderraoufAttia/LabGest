@@ -56,6 +56,24 @@ if (isset($_GET['router'])) {
             $controller->afficherDetailsEquipe();
             break;
 
+        case 'add-team-member':
+            require_once("Controller/teamController.php");
+            $controller = new teamController();
+            $controller->addTeamMember();
+            break;
+
+        case 'remove-team-member':
+            require_once("Controller/teamController.php");
+            $controller = new teamController();
+            $controller->removeTeamMember();
+            break;
+
+        case 'leave-team':
+            require_once("Controller/teamController.php");
+            $controller = new teamController();
+            $controller->leaveTeam();
+            break;
+
         case 'membre-profil':
             require_once("Controller/teamController.php");
             $controller = new teamController();

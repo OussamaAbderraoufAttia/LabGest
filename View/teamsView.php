@@ -4,6 +4,7 @@ require_once("View/Components/TableView.php");
 require_once("View/Components/CardView.php");
 require_once("View/Components/OrganigramView.php");
 require_once("Model/teamModel.php");
+require_once("Model/userModel.php");
 
 class teamsView {
     
@@ -96,6 +97,22 @@ class teamsView {
     // DETAIL VIEW: Organigram + Members Table
     public function afficherDetailsEquipe($team, $members, $publications) {
         $common = new commonViews();
+        $currentUserId = $_SESSION['user']['id_user'] ?? null;
+        $isAdmin = $_SESSION['admin']['id_user'] ?? null;
+        
+        // Check if current user is chef
+        $isChef = $currentUserId && $currentUserId == $team['chef_id'];
+        $isMember = false;
+        $canManage = $isAdmin || $isChef; // Both admin and chef can manage
+        
+        if ($currentUserId) {
+            foreach ($members as $m) {
+                if ($m['id_user'] == $currentUserId) {
+                    $isMember = true;
+                    break;
+                }
+            }
+        }
         
         // Prepare Organigram Data
         // Root: Chef
@@ -136,6 +153,35 @@ class teamsView {
                         </p>
                     <?php endif; ?>
                     
+                    <!-- ALERTS -->
+                    <?php if (isset($_GET['success'])): ?>
+                        <div class="alert alert-success" style="margin-bottom:20px; background:#d4edda; border:1px solid #c3e6cb; color:#155724; padding:15px; border-radius:5px;">
+                            <i class="fa-solid fa-check-circle"></i>
+                            <?php
+                                switch($_GET['success']) {
+                                    case 'member_added': echo 'Membre ajouté avec succès!'; break;
+                                    case 'member_removed': echo 'Membre supprimé avec succès!'; break;
+                                    default: echo 'Action réalisée avec succès!';
+                                }
+                            ?>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if (isset($_GET['error'])): ?>
+                        <div class="alert alert-danger" style="margin-bottom:20px; background:#f8d7da; border:1px solid #f5c6cb; color:#721c24; padding:15px; border-radius:5px;">
+                            <i class="fa-solid fa-exclamation-circle"></i>
+                            <?php
+                                switch($_GET['error']) {
+                                    case 'not_chef': echo 'Seul le chef d\'équipe peut effectuer cette action.'; break;
+                                    case 'already_member': echo 'Cet utilisateur est déjà membre de l\'équipe.'; break;
+                                    case 'cannot_delete_chef': echo 'Impossible de supprimer le chef de l\'équipe.'; break;
+                                    case 'chef_cannot_leave': echo 'Le chef d\'équipe ne peut pas quitter l\'équipe.'; break;
+                                    default: echo 'Une erreur s\'est produite.';
+                                }
+                            ?>
+                        </div>
+                    <?php endif; ?>
+                    
                     <!-- VISUAL ORGANIGRAM -->
                     <section class="organigram-section">
                         <h2 class="section-heading"><i class="fa-solid fa-sitemap"></i> Organigramme de l'équipe</h2>
@@ -160,9 +206,21 @@ class teamsView {
                     
                     <!-- MEMBERS TABLE -->
                     <section class="members-list-section">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap:wrap; gap:15px;">
                             <h2 class="section-heading" style="margin:0;"><i class="fa-solid fa-users"></i> Liste des Membres</h2>
-                            <input type="text" id="memberSearch" placeholder="Filtrer les membres..." class="form-input" style="width: auto;">
+                            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                                <input type="text" id="memberSearch" placeholder="Filtrer les membres..." class="form-input" style="width: auto;">
+                                
+                                <?php if ($canManage): ?>
+                                    <button class="btn btn-primary" onclick="document.getElementById('addMemberModal').style.display='block';" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border:none; color:white; padding:10px 20px; border-radius:5px; cursor:pointer;">
+                                        <i class="fa-solid fa-user-plus"></i> Ajouter un Membre
+                                    </button>
+                                <?php elseif ($isMember): ?>
+                                    <button class="btn btn-danger" onclick="confirmLeaveTeam(<?= $team['id_team'] ?>);" style="background:#dc3545; border:none; color:white; padding:10px 20px; border-radius:5px; cursor:pointer;">
+                                        <i class="fa-solid fa-door-open"></i> Quitter l'équipe
+                                    </button>
+                                <?php endif; ?>
+                            </div>
                         </div>
                         
                         <?php
@@ -183,10 +241,19 @@ class teamsView {
                             'specialite' => ['label' => 'Spécialité', 'renderer' => function($row) {
                                 return htmlspecialchars($row['specialite'] ?? '-');
                             }, 'sortType' => 'string'],
-                            'actions' => ['label' => 'Profil', 'renderer' => function($row) {
-                                return '<a href="index.php?router=membre-profil&id='.$row['id_user'].'" class="btn-sm btn-secondary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                            <i class="fa-solid fa-user"></i>
+                            'actions' => ['label' => 'Actions', 'renderer' => function($row) use ($isChef, $isAdmin, $team) {
+                                $html = '<a href="index.php?router=membre-profil&id='.$row['id_user'].'" class="btn-sm btn-secondary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; padding:5px 10px; border-radius:3px; text-decoration:none; display:inline-block;">
+                                            <i class="fa-solid fa-user"></i> Profil
                                         </a>';
+                                
+                                // Chef can delete members (not themselves), Admin can delete anyone (including chef)
+                                $canDelete = ($isChef && $row['id_user'] != $team['chef_id']) || $isAdmin;
+                                if ($canDelete) {
+                                    $html .= ' <button class="btn-sm" onclick="confirmRemoveMember('.$team['id_team'].', '.$row['id_user'].', \''.htmlspecialchars($row['prenom'].' '.$row['nom']).'\');" style="background:#dc3545; color:white; padding:5px 10px; border-radius:3px; border:none; cursor:pointer;">
+                                                <i class="fa-solid fa-trash"></i> Supprimer
+                                            </button>';
+                                }
+                                return $html;
                             }, 'sortType' => 'none']
                         ];
                         
@@ -194,6 +261,80 @@ class teamsView {
                         ?>
                     </section>
                 </div>
+                
+                <!-- ADD MEMBER MODAL (Chef only) -->
+                <?php if ($isChef): ?>
+                    <div id="addMemberModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5);">
+                        <div style="background-color:#fff; margin:10% auto; padding:30px; border-radius:10px; width:90%; max-width:500px; box-shadow:0 10px 30px rgba(0,0,0,0.3);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                                <h2 style="margin:0;">Ajouter un Membre</h2>
+                                <button onclick="document.getElementById('addMemberModal').style.display='none';" style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button>
+                            </div>
+                            
+                            <form method="POST" action="index.php?router=add-team-member" style="padding:20px 0; border-top:1px solid #eee;">
+                                <input type="hidden" name="team_id" value="<?= $team['id_team'] ?>">
+                                
+                                <label style="display:block; margin-bottom:15px;">
+                                    <strong>Sélectionner un utilisateur :</strong>
+                                    <select name="user_id" required style="width:100%; padding:10px; margin-top:5px; border:1px solid #ddd; border-radius:5px;">
+                                        <option value="">-- Choisir un utilisateur --</option>
+                                        <?php
+                                        $userModel = new userModel();
+                                        $availableUsers = $userModel->getAllUsers();
+                                        foreach ($availableUsers as $user) {
+                                            $isAlreadyMember = false;
+                                            foreach ($members as $m) {
+                                                if ($m['id_user'] == $user['id_user']) {
+                                                    $isAlreadyMember = true;
+                                                    break;
+                                                }
+                                            }
+                                            if (!$isAlreadyMember && $user['id_user'] != $team['chef_id']) {
+                                                echo '<option value="'.$user['id_user'].'">'.htmlspecialchars($user['prenom'].' '.$user['nom'].' ('.$user['grade'].')').'</option>';
+                                            }
+                                        }
+                                        ?>
+                                    </select>
+                                </label>
+                                
+                                <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:25px; padding-top:15px; border-top:1px solid #eee;">
+                                    <button type="button" onclick="document.getElementById('addMemberModal').style.display='none';" class="btn btn-secondary" style="background:#6c757d; color:white; padding:10px 20px; border:none; border-radius:5px; cursor:pointer;">Annuler</button>
+                                    <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; padding:10px 20px; border:none; border-radius:5px; cursor:pointer;">Ajouter</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <script>
+                        function confirmRemoveMember(teamId, userId, memberName) {
+                            if (confirm('Êtes-vous sûr de vouloir supprimer ' + memberName + ' de l\'équipe ?')) {
+                                var form = document.createElement('form');
+                                form.method = 'POST';
+                                form.action = 'index.php?router=remove-team-member';
+                                form.innerHTML = '<input type="hidden" name="team_id" value="' + teamId + '">' +
+                                                '<input type="hidden" name="user_id" value="' + userId + '">';
+                                document.body.appendChild(form);
+                                form.submit();
+                            }
+                        }
+                    </script>
+                <?php endif; ?>
+                
+                <!-- LEAVE TEAM CONFIRMATION -->
+                <?php if ($isMember && !$isChef): ?>
+                    <script>
+                        function confirmLeaveTeam(teamId) {
+                            if (confirm('Êtes-vous sûr de vouloir quitter cette équipe ?')) {
+                                var form = document.createElement('form');
+                                form.method = 'POST';
+                                form.action = 'index.php?router=leave-team';
+                                form.innerHTML = '<input type="hidden" name="team_id" value="' + teamId + '">';
+                                document.body.appendChild(form);
+                                form.submit();
+                            }
+                        }
+                    </script>
+                <?php endif; ?>
                 
                 <script>
                     $('#memberSearch').on('keyup', function() {

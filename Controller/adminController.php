@@ -299,6 +299,8 @@ class adminController {
     
     public function gererEvenements() {
         require_once("Model/eventModel.php");
+        require_once("Model/userModel.php");
+        require_once("Model/notificationModel.php");
         require_once("View/adminEventsView.php");
         
         $model = new eventModel();
@@ -329,9 +331,27 @@ class adminController {
                 }
                 
                 $model->addEvent($_POST['titre'], $_POST['description'], $_POST['date_event'], $_POST['lieu'], $_POST['type'], $image);
+                
+                // Send notifications to all internal users
+                $userModel = new userModel();
+                $allUsers = $userModel->getAllUsers();
+                $notifModel = new notificationModel();
+                foreach ($allUsers as $user) {
+                    $notifModel->createNotification($user['id_user'], "Nouvel événement créé: " . $_POST['titre'], "event", "index.php?router=event_details&id=" . $model->getLastEventId());
+                }
             }
             elseif ($action === 'add_offer') {
                 $model->addOffer($_POST['titre'], $_POST['description'], $_POST['date_limite'], $_POST['type'], $_POST['lien_postuler']);
+                
+                // Notify relevant users about job offer
+                $userModel = new userModel();
+                $allUsers = $userModel->getAllUsers();
+                $notifModel = new notificationModel();
+                foreach ($allUsers as $user) {
+                    if ($user['role'] !== 'admin') {
+                        $notifModel->createNotification($user['id_user'], "Nouvelle offre: " . $_POST['titre'], "info", "index.php?router=events");
+                    }
+                }
             }
             
             header("Location: index.php?router=admin-events");
