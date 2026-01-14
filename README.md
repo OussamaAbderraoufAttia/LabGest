@@ -146,7 +146,7 @@ index.php (Router)
 - Avantages: DRY (Don't Repeat Yourself), maintenabilité, réutilisabilité
 ```
 
----
+
 
 ## 4. SYSTÈME CORE - AMÉLIORATIONS IMPLÉMENTÉES
 
