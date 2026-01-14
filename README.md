@@ -144,9 +144,9 @@ index.php (Router)
 - Tous les composants hériteraient d'une classe `BaseComponent` (pattern Strategy)
 - Composants: `CardComponent`, `FormComponent`, `NavBarComponent`, `FooterComponent`
 - Avantages: DRY (Don't Repeat Yourself), maintenabilité, réutilisabilité
-```
 
 
+---
 
 ## 4. SYSTÈME CORE - AMÉLIORATIONS IMPLÉMENTÉES
 
